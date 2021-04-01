@@ -16,11 +16,11 @@ from ..errors import (
 from ..extensions import BinaryReader
 from ..tl.core import RpcResult, MessageContainer, GzipPacked
 from ..tl.functions.auth import LogOutRequest
-from ..tl.functions import PingRequest
+from ..tl.functions import PingRequest, DestroySessionRequest
 from ..tl.types import (
     MsgsAck, Pong, BadServerSalt, BadMsgNotification, FutureSalts,
     MsgNewDetailedInfo, NewSessionCreated, MsgDetailedInfo, MsgsStateReq,
-    MsgsStateInfo, MsgsAllInfo, MsgResendReq, upload
+    MsgsStateInfo, MsgsAllInfo, MsgResendReq, upload, DestroySessionOk, DestroySessionNone,
 )
 from ..crypto import AuthKey
 from ..helpers import retry_range
@@ -108,6 +108,8 @@ class MTProtoSender:
             MsgsStateReq.CONSTRUCTOR_ID: self._handle_state_forgotten,
             MsgResendReq.CONSTRUCTOR_ID: self._handle_state_forgotten,
             MsgsAllInfo.CONSTRUCTOR_ID: self._handle_msg_all,
+            DestroySessionOk: self._handle_destroy_session,
+            DestroySessionNone: self._handle_destroy_session,
         }
 
     # Public API
@@ -777,7 +779,8 @@ class MTProtoSender:
             state = self._pending_state.get(msg_id)
             if state and isinstance(state.request, LogOutRequest):
                 del self._pending_state[msg_id]
-                state.future.set_result(True)
+                if not state.future.cancelled():
+                    state.future.set_result(True)
 
     async def _handle_future_salts(self, message):
         """
@@ -807,3 +810,19 @@ class MTProtoSender:
         """
         Handles :tl:`MsgsAllInfo` by doing nothing (yet).
         """
+
+    async def _handle_destroy_session(self, message):
+        """
+        Handles both :tl:`DestroySessionOk` and :tl:`DestroySessionNone`.
+        It behaves pretty much like handling an RPC result.
+        """
+        for msg_id, state in self._pending_state.items():
+            if isinstance(state.request, DestroySessionRequest)\
+                    and state.request.session_id == message.obj.session_id:
+                break
+        else:
+            return
+
+        del self._pending_state[msg_id]
+        if not state.future.cancelled():
+            state.future.set_result(message.obj)

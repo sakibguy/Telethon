@@ -145,6 +145,12 @@ class Message(ChatGetter, SenderGetter, TLObject):
             An optional list of reasons why this message was restricted.
             If the list is `None`, this message has not been restricted.
 
+        ttl_period (`int`):
+            The Time To Live period configured for this message.
+            The message should be erased from wherever it's stored (memory, a
+            local database, etc.) when
+            ``datetime.now() > message.date + timedelta(seconds=message.ttl_period)``.
+
         action (:tl:`MessageAction`):
             The message action object of the message for :tl:`MessageService`
             instances, which will be `None` for other types of messages.
@@ -168,6 +174,7 @@ class Message(ChatGetter, SenderGetter, TLObject):
             post: Optional[bool] = None,
             from_id: Optional[types.TypePeer] = None,
             reply_to: Optional[types.TypeMessageReplyHeader] = None,
+            ttl_period: Optional[int] = None,
 
             # For Message (mandatory)
             message: Optional[str] = None,
@@ -221,6 +228,7 @@ class Message(ChatGetter, SenderGetter, TLObject):
         self.post_author = post_author
         self.grouped_id = grouped_id
         self.restriction_reason = restriction_reason
+        self.ttl_period = ttl_period
         self.action = action
 
         # Convenient storage for custom functions
@@ -261,6 +269,12 @@ class Message(ChatGetter, SenderGetter, TLObject):
         known entities.
         """
         self._client = client
+
+        # Make messages sent to ourselves outgoing unless they're forwarded.
+        # This makes it consistent with official client's appearance.
+        if self.peer_id == types.PeerUser(client._self_id) and not self.fwd_from:
+            self.out = True
+
         cache = client._entity_cache
 
         self._sender, self._input_sender = utils._get_entity_pair(
@@ -824,7 +838,7 @@ class Message(ChatGetter, SenderGetter, TLObject):
 
     async def click(self, i=None, j=None,
                     *, text=None, filter=None, data=None, share_phone=None,
-                    share_geo=None):
+                    share_geo=None, password=None):
         """
         Calls :tl:`SendVote` with the specified poll option
         or `button.click <telethon.tl.custom.messagebutton.MessageButton.click>`
@@ -903,6 +917,12 @@ class Message(ChatGetter, SenderGetter, TLObject):
 
                 If the button is pressed without this, `ValueError` is raised.
 
+            password (`str`):
+                When clicking certain buttons (such as BotFather's confirmation
+                button to transfer ownership), if your account has 2FA enabled,
+                you need to provide your account's password. Otherwise,
+                `teltehon.errors.PasswordHashInvalidError` is raised.
+
             Example:
 
                 .. code-block:: python
@@ -926,19 +946,13 @@ class Message(ChatGetter, SenderGetter, TLObject):
             return
 
         if data:
-            if not await self.get_input_chat():
+            chat = await self.get_input_chat()
+            if not chat:
                 return None
 
-            try:
-                return await self._client(
-                    functions.messages.GetBotCallbackAnswerRequest(
-                        peer=self._input_chat,
-                        msg_id=self.id,
-                        data=data
-                    )
-                )
-            except errors.BotResponseTimeoutError:
-                return None
+            but = types.KeyboardButtonCallback('', data)
+            return await MessageButton(self._client, but, chat, None, self.id).click(
+                share_phone=share_phone, share_geo=share_geo, password=password)
 
         if sum(int(x is not None) for x in (i, text, filter)) >= 2:
             raise ValueError('You can only set either of i, text or filter')
@@ -1010,7 +1024,8 @@ class Message(ChatGetter, SenderGetter, TLObject):
 
         button = find_button()
         if button:
-            return await button.click(share_phone=share_phone, share_geo=share_geo)
+            return await button.click(
+                share_phone=share_phone, share_geo=share_geo, password=password)
 
     async def mark_read(self):
         """

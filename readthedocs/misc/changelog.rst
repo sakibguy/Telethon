@@ -14,6 +14,115 @@ it can take advantage of new goodies!
 .. contents:: List of All Versions
 
 
+New schema and QoL improvements (v1.21)
+=======================================
+
++------------------------+
+| Scheme layer used: 125 |
++------------------------+
+
+`View new and changed raw API methods <https://diff.telethon.dev/?from=124&to=125>`__.
+
+Not many changes in this release, mostly the layer change. Lately quite a few
+people have been reporting `TypeNotFoundError`, which occurs when the server
+**sends types that it shouldn't**. This can happen when Telegram decides to
+add a new, incomplete layer, and then they change the layer without bumping
+the layer number (so some constructor IDs no longer match and the error
+occurs). This layer change
+`should fix it <https://github.com/LonamiWebs/Telethon/issues/1724>`__.
+
+Additions
+~~~~~~~~~
+
+* `Message.click() <telethon.tl.custom.message.Message.click>` now supports
+  a ``password`` parameter, needed when doing things like changing the owner
+  of a bot via `@BotFather <https://t.me/BotFather>`__.
+
+Enhancements
+~~~~~~~~~~~~
+
+* ``tgcrypto`` will now be used for encryption when installed.
+
+Bug fixes
+~~~~~~~~~
+
+* `Message.edit <telethon.tl.custom.message.Message.edit>` wasn't working in
+  your own chat on events other than ``NewMessage``.
+* `client.delete_dialog() <telethon.client.dialogs.DialogMethods.delete_dialog>`
+  was not working on chats.
+* ``events.UserUpdate`` should now handle channels' typing status.
+* :tl:`InputNotifyPeer` auto-cast should now work on other ``TLObject``.
+* For some objects, ``False`` was not correctly serialized.
+
+
+New schema and QoL improvements (v1.20)
+=======================================
+
++------------------------+
+| Scheme layer used: 124 |
++------------------------+
+
+`View new and changed raw API methods <https://diff.telethon.dev/?from=122&to=124>`__.
+
+A bit late to the party, but Telethon now offers a convenient way to comment
+on channel posts. It works very similar to ``reply_to``:
+
+.. code-block:: python
+
+    client.send_message(channel, 'Great update!', comment_to=1134)
+
+This code will leave a comment to the channel post with ID ``1134`` in
+``channel``.
+
+In addition, the library now logs warning or error messages to ``stderr`` by
+default! You no longer should be left wondering "why isn't my event handler
+working" if you forgot to configure logging. It took so long for this change
+to arrive because nobody noticed that Telethon was using a
+``logging.NullHandler`` when it really shouldn't have.
+
+If you want the old behaviour of no messages being logged, you can configure
+`logging` to ``CRITICAL`` severity:
+
+.. code-block:: python
+
+    import logging
+    logging.basicConfig(level=logging.CRITICAL)
+
+This is not considered a breaking change because ``stderr`` should only be
+used for logging purposes, not to emit information others may consume (use
+``stdout`` for that).
+
+Additions
+~~~~~~~~~
+
+* New ``comment_to`` parameter in `client.send_message()
+  <telethon.client.messages.MessageMethods.send_message>`, and
+  `client.send_file() <telethon.client.uploads.UploadMethods.send_file>`
+  to comment on channel posts.
+
+Enhancements
+~~~~~~~~~~~~
+
+* ``utils.resolve_invite_link`` handles the newer link format.
+* Downloading files now retries once on `TimeoutError`, which has been
+  happening recently. It is not guaranteed to work, but it should help.
+* Sending albums of photo URLs is now supported.
+* EXIF metadata is respected when automatically resizing photos, so the
+  orientation information should no longer be lost.
+* Downloading a thumbnail by index should now use the correct size ordering.
+
+Bug fixes
+~~~~~~~~~
+
+* Fixed a `KeyError` on certain cases with ``Conversation``.
+* Thumbnails should properly render on more clients. Installing ``hachoir``
+  may help.
+* Message search was broken when using a certain combination of parameters.
+* ``utils.resolve_id`` was misbehaving with some identifiers.
+* Fix ``TypeNotFoundError`` was not being propagated, causing deadlocks.
+* Invoking multiple requests at once with ``ordered=True`` was deadlocking.
+
+
 New raw API call methods (v1.19)
 ================================
 

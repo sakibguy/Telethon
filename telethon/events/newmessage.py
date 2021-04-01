@@ -114,7 +114,8 @@ class NewMessage(EventBuilder):
                 fwd_from=update.fwd_from,
                 via_bot_id=update.via_bot_id,
                 reply_to=update.reply_to,
-                entities=update.entities
+                entities=update.entities,
+                ttl_period=update.ttl_period
             ))
         elif isinstance(update, types.UpdateShortChatMessage):
             event = cls.Event(types.Message(
@@ -130,16 +131,11 @@ class NewMessage(EventBuilder):
                 fwd_from=update.fwd_from,
                 via_bot_id=update.via_bot_id,
                 reply_to=update.reply_to,
-                entities=update.entities
+                entities=update.entities,
+                ttl_period=update.ttl_period
             ))
         else:
             return
-
-        # Make messages sent to ourselves outgoing unless they're forwarded.
-        # This makes it consistent with official client's appearance.
-        ori = event.message
-        if ori.peer_id == types.PeerUser(self_id) and not ori.fwd_from:
-            event.message.out = True
 
         return event
 

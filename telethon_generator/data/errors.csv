@@ -38,6 +38,7 @@ BOT_MISSING,400,This method can only be run by a bot
 BOT_PAYMENTS_DISABLED,400,This method can only be run by a bot
 BOT_POLLS_DISABLED,400,You cannot create polls under a bot account
 BOT_RESPONSE_TIMEOUT,400,The bot did not answer to the callback query in time
+BROADCAST_CALLS_DISABLED,400,
 BROADCAST_FORBIDDEN,403,The request cannot be used in broadcast channels
 BROADCAST_ID_INVALID,400,The channel is invalid
 BROADCAST_PUBLIC_VOTERS_FORBIDDEN,400,You cannot broadcast polls where the voters are public
@@ -108,6 +109,7 @@ ENCRYPTION_OCCUPY_FAILED,500,TDLib developer claimed it is not an error while ac
 ENTITIES_TOO_LONG,400,It is no longer possible to send such long data inside entity tags (for example inline text URLs)
 ENTITY_MENTION_USER_INVALID,400,You can't use this entity
 ERROR_TEXT_EMPTY,400,The provided error message is empty
+EXPIRE_FORBIDDEN,400,
 EXPORT_CARD_INVALID,400,Provided card is invalid
 EXTERNAL_URL_INVALID,400,External URL invalid
 FIELD_NAME_EMPTY,400,The field with the name FIELD_NAME is missing
@@ -153,7 +155,7 @@ INLINE_RESULT_EXPIRED,400,The inline query expired
 INPUT_CONSTRUCTOR_INVALID,400,The provided constructor is invalid
 INPUT_FETCH_ERROR,400,An error occurred while deserializing TL parameters
 INPUT_FETCH_FAIL,400,Failed deserializing TL payload
-INPUT_FILTER_INVALID,400,The search query filter is valid
+INPUT_FILTER_INVALID,400,The search query filter is invalid
 INPUT_LAYER_INVALID,400,The provided layer is invalid
 INPUT_METHOD_INVALID,400,The invoked method does not exist anymore or has never existed
 INPUT_REQUEST_TOO_LONG,400,The input request was too long. This may be a bug in the library as it can occur when serializing more bytes than it should (like appending the vector constructor code at the end of a message)
@@ -176,6 +178,7 @@ MEDIA_EMPTY,400,The provided media object is invalid or the current account may 
 MEDIA_INVALID,400,Media invalid
 MEDIA_NEW_INVALID,400,The new media to edit the message with is invalid (such as stickers or voice notes)
 MEDIA_PREV_INVALID,400,The old media cannot be edited with anything else (such as stickers or voice notes)
+MEDIA_TTL_INVALID,400,
 MEGAGROUP_ID_INVALID,400,The group is invalid
 MEGAGROUP_PREHISTORY_HIDDEN,400,You can't set this discussion group because it's history is hidden
 MEGAGROUP_REQUIRED,400,The request can only be used with a megagroup channel
